@@ -1,0 +1,14 @@
+Async read/ write
+	#include <aio.h>
+	
+	struct aiocb cb;
+	memset(&cb, 0, sizeof(struct aiocb));
+	cb.aio_nbytes = SIZE_TO_READ;
+	cb.aio_fildes = file;
+	cb.aio_offset = 0;
+	cb.aio_buf = buffer;
+	
+- Sync reda/ write causes program blocked until it done
+ => use async or other thread to read/ write.
+ 
+ => after aio_read(&cb) will trigger an other process / thread to execute
