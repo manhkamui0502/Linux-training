@@ -25,3 +25,4 @@ written before (open_file).
   ```
   ./ex3 test.txt
   ```
+4. Use SIGCHLD to prevent ZOMBIE state.
