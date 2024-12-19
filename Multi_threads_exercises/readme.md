@@ -20,3 +20,8 @@
 ## Task 2
 * Thread 1 will print a string to verify every 2 seconds
 * Thread 2 will print a person identify every 3 seconds
+
+# Thread and process comparision
+
+
+![alt text](comparision.png)
