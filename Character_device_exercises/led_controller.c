@@ -34,10 +34,10 @@ static led_controller_dev led_cdev = {
 };
 
 // Function prototypes for file operations
-int chardev_open(struct inode *inode, struct file *filep);
-int chardev_release(struct inode *inode, struct file *filep);
-ssize_t chardev_read(struct file *filep, char __user *buf, size_t len, loff_t *offset);
-ssize_t chardev_write(struct file *filep, const char __user *buf, size_t len, loff_t *offset);
+static int chardev_open(struct inode *inode, struct file *filep);
+static int chardev_release(struct inode *inode, struct file *filep);
+static ssize_t chardev_read(struct file *filep, char __user *buf, size_t len, loff_t *offset);
+static ssize_t chardev_write(struct file *filep, const char __user *buf, size_t len, loff_t *offset);
 
 // File operations structure
 static const struct file_operations fops = {
@@ -50,19 +50,19 @@ static const struct file_operations fops = {
 };
 
 // Open the device
-int chardev_open(struct inode *inode, struct file *filep) {
+static int chardev_open(struct inode *inode, struct file *filep) {
   pr_info("Led controller opened\n");
   return 0;
 }
 
 // Close the device
-int chardev_release(struct inode *inode, struct file *filep) {
+static int chardev_release(struct inode *inode, struct file *filep) {
   pr_info("Led controller closed\n");
   return 0;
 }
 
 // Read from the device
-ssize_t chardev_read(struct file *filep, char __user *buf, size_t len, loff_t *offset) {
+static ssize_t chardev_read(struct file *filep, char __user *buf, size_t len, loff_t *offset) {
   pr_info("Led controller being read\n");
   size_t state_len;
 
@@ -86,7 +86,7 @@ ssize_t chardev_read(struct file *filep, char __user *buf, size_t len, loff_t *o
 }
 
 // Write to the device
-ssize_t chardev_write(struct file *filep, const char __user *buf, size_t len, loff_t *offset) {
+static ssize_t chardev_write(struct file *filep, const char __user *buf, size_t len, loff_t *offset) {
   pr_info("Led controller being written\n");
   char user_buf[BUF_LEN];
 
@@ -121,13 +121,11 @@ ssize_t chardev_write(struct file *filep, const char __user *buf, size_t len, lo
 // Initialize the LED controller
 static int __init led_control_init(void) {
   int ret;
-  snprintf(led_cdev.state, sizeof(led_cdev.state), "off");
 
   // Request GPIO pin
   ret = gpio_request(RED_LED_GPIO_PIN, "LED_GPIO");
   if (ret) {
-    pr_err("Failed to request GPIO pin\n");
-    return ret;
+    goto fail_request_gpio;
   }
 
   // Set as output and turn off the LED initially
@@ -137,10 +135,8 @@ static int __init led_control_init(void) {
   // Allocate character device region
   ret = alloc_chrdev_region(&led_cdev.dev, 0, 1, "led controller");
   if (ret) {
-    gpio_set_value(RED_LED_GPIO_PIN, 0); // Turn off the LED
-    gpio_free(RED_LED_GPIO_PIN);         // Release the GPIO pin
     pr_info("Can not register major number.\n");
-    return ret;
+    goto fail_alloc_chrdev;
   }
   pr_info("Register successfully, major number is %d.\n", MAJOR(led_cdev.dev));
   pr_info("Register successfully, minor number is %d.\n", MINOR(led_cdev.dev));
@@ -152,40 +148,39 @@ static int __init led_control_init(void) {
 
   ret = cdev_add(&led_cdev.my_cdev, led_cdev.dev, 1);
   if (ret < 0) {
-    gpio_set_value(RED_LED_GPIO_PIN, 0);  // Turn off the LED
-    gpio_free(RED_LED_GPIO_PIN);          // Release the GPIO pin
-    unregister_chrdev_region(led_cdev.dev, 1);  // Unregister the character device region
     pr_info("cdev_add error!\n");
-    return ret;
+    goto fail_cdev_add;
   }
 
   // Create class
   led_cdev.class_name = class_create(THIS_MODULE, LED_CLASS_NAME);
   if (IS_ERR(led_cdev.class_name)) {
-    gpio_set_value(RED_LED_GPIO_PIN, 0);  // Turn off the LED
-    gpio_free(RED_LED_GPIO_PIN);          // Release the GPIO pin
-    cdev_del(&led_cdev.my_cdev);          // Remove the character device
-    unregister_chrdev_region(led_cdev.dev, 1);  // Unregister the character device region
     pr_info("class_create failed!\n");
-    return PTR_ERR(led_cdev.class_name);
+    goto fail_class_create;
   }
   pr_info("class_create successfully!\n");
 
   // Create device
   led_cdev.device_name = device_create(led_cdev.class_name, NULL, led_cdev.dev, NULL, LED_CONTROL_DEV_NAME);
   if (IS_ERR(led_cdev.device_name)) {
-    gpio_set_value(RED_LED_GPIO_PIN, 0);  // Turn off the LED
-    gpio_free(RED_LED_GPIO_PIN);          // Release the GPIO pin
-    cdev_del(&led_cdev.my_cdev);          // Remove the character device
-    class_destroy(led_cdev.class_name);         // Destroy the device class
-    unregister_chrdev_region(led_cdev.dev, 1);  // Unregister the character device region
     pr_info("device_create failed!\n");
-    return PTR_ERR(led_cdev.device_name);
+    goto fail_device_create;
   }
 
   pr_info("Led controller driver loaded\n");
-
   return 0;
+
+fail_device_create:
+  class_destroy(led_cdev.class_name);   // Destroy the device class
+fail_class_create:
+  cdev_del(&led_cdev.my_cdev);          // Remove the character device
+fail_cdev_add:
+  unregister_chrdev_region(led_cdev.dev, 1);  // Unregister the character device region
+fail_alloc_chrdev:
+  gpio_set_value(RED_LED_GPIO_PIN, 0);  // Turn off the LED
+  gpio_free(RED_LED_GPIO_PIN);          // Release the GPIO pin
+fail_request_gpio:
+  return ret;
 }
 
 static void __exit led_control_exit(void) {
