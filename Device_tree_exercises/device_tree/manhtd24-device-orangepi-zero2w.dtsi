@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: (GPL-2.0+)
+
+/ {
+  device1: device@1 {
+    compatible = "manhtd24,device1";  // Name of the device
+    reg = <0x0 0x1000 0x0 0x100>;   // Device ID, Base address, Size
+    size = <512>;                   // Device buffer
+    label = "device1";              // Label for the device
+    serial = "A3F5G7H2I9J0";        // Device serial
+    status = "okay";                // Device status (active)
+    permission = "ro";              // Read/write permission for the device
+  };
+
+  device2: device@2 {
+    compatible = "manhtd24,device2";  // Name of the device
+    reg = <0x0 0x2000 0x0 0x100>;   // Device ID, Base address, Size
+    size = <1024>;                  // Device buffer
+    label = "device2";              // Label for the device
+    serial = "X5K3W1D9L7P4";        // Device serial
+    status = "okay";                // Device status (active)
+    permission = "rw";              // Read/write permission for the device
+  };
+
+  device3: device@3 {
+    compatible = "manhtd24,device3";  // Name of the device
+    reg = <0x0 0x3000 0x0 0x100>;   // Device ID, Base address, Size
+    size = <512>;                   // Device buffer
+    label = "device3";              // Label for the device
+    serial = "P3D2L5O7A8X1";        // Device serial
+    status = "disable";             // Device status (active)
+    permission = "ro";              // Read-only permission for the device
+  };
+
+  device4: device@4 {
+    compatible = "manhtd24,device4";  // Name of the device
+    reg = <0x0 0x4000 0x0 0x100>;   // Device ID, Base address, Size
+    size = <2048>;                  // Device buffer
+    label = "device4";              // Label for the device
+    serial = "B4S7Y9J6V1R3";        // Device serial
+    status = "okay";                // Device status (active)
+    permission = "rw";              // Read/write permission for the device
+  };
+
+  device5: device@5 {
+    compatible = "manhtd24,device5";  // Name of the device
+    reg = <0x0 0x5000 0x0 0x100>;   // Device ID, Base address, Size
+    size = <1024>;                  // Device buffer
+    label = "device5";              // Label for the device
+    serial = "M8N6Q2Z1T0F5";        // Device serial
+    status = "okay";                // Device status (active)
+    permission = "rw";              // Read/write permission for the device
+  };
+};
+
