@@ -36,7 +36,7 @@
 * Load into kernel using `sudo insmod manhtd24_driver.ko`.
 * Now, to check if the device was match and initialize, use `dmesg`
   ```CSS
-  dmesg | tail - 30` // to get the lastest 30 lines.
+  dmesg | tail - 30 // to get the lastest 30 lines.
   ```
 * Driver load successfull and devices are detected:
   ```
