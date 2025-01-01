@@ -223,6 +223,12 @@ static int my_device_probe(struct platform_device *pdev) {
 
   // Create device file
   mdevice->device = device_create(manhtd24_class, NULL, mdevice->dev, NULL, mdevice->name);
+  if (IS_ERR(mdevice->device)) {
+    pr_err("Failed to create device file for %s\n", mdevice->name);
+    kfree(mdata);
+    kfree(mdevice);
+    return IS_ERR(mdevice->device);
+  }
   mdevice->device->platform_data = mdata;  // Attach the platform data to the device
   dev->platform_data = mdevice;            
   dev_info(dev, "Device successfully matched and initialized\n");
