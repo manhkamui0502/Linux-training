@@ -63,7 +63,9 @@ static int manhtd24dev_open(struct inode *inode, struct file *filep) {
 // Function to read the device file
 static ssize_t manhtd24dev_read(struct file *filep, char __user *buf, size_t len, loff_t *offset) {
   manhtd24_dev *mdevice = (manhtd24_dev *)filep->private_data;
-  size_t state_len = strlen(mdevice->state);
+  manhtd24_device_data *data = mdevice->device->platform_data;
+  char kernel_buffer[1024]; // Kernel buffer to hold formatted data
+  size_t state_len = sizeof(kernel_buffer);
 
   if (*offset != 0) {
     return 0; // EOF
@@ -72,14 +74,32 @@ static ssize_t manhtd24dev_read(struct file *filep, char __user *buf, size_t len
   if (len < state_len + 1) {
     return -EINVAL; // User buffer is too small
   }
+
+  // Format the device data into the kernel buffer
+  len = snprintf(kernel_buffer, sizeof(kernel_buffer),
+                 "Device Information:\n"
+                 "Label       : %s\n"
+                 "Serial      : %s\n"
+                 "Reg Base    : 0x%016llx\n"
+                 "Reg Size    : 0x%016llx\n"
+                 "Size        : %u bytes\n"
+                 "Permission  : %s\n\n"
+                 "State       : %s\n",
+                 data->label,
+                 data->serial,
+                 data->reg_base,
+                 data->reg_size,
+                 data->size,
+                 data->permission,
+                 mdevice->state);
     
-  if (copy_to_user(buf, mdevice->state, state_len + 1)) {
+  if (copy_to_user(buf, kernel_buffer, len + 1)) {
     return -EFAULT;
   }
 
   pr_info("Device %s done read\n", mdevice->name);  
-  *offset += state_len + 1;
-  return state_len + 1;
+  *offset += len + 1;
+  return len + 1;
 }
 
 // Function to write to device file
