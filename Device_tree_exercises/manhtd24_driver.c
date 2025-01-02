@@ -124,11 +124,11 @@ static ssize_t manhtd24dev_write(struct file *filep, const char __user *buf, siz
 
   user_buf[len] = '\0'; // Null-terminate the string
   
-  if (strcmp(user_buf, "idle") == 0) {
+  if (strncmp(user_buf, "idle", 4) == 0) {
     strcpy(mdevice->state, user_buf);
     // Do somthings
     pr_info("switch to idle\n");
-  } else if (strcmp(user_buf, "running") == 0) {
+  } else if (strncmp(user_buf, "running", 7) == 0) {
     strcpy(mdevice->state, user_buf);
     // Do somthings
     pr_info("switch to running\n");
