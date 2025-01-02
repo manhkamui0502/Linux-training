@@ -65,41 +65,42 @@ static ssize_t manhtd24dev_read(struct file *filep, char __user *buf, size_t len
   manhtd24_dev *mdevice = (manhtd24_dev *)filep->private_data;
   manhtd24_device_data *data = mdevice->device->platform_data;
   char kernel_buffer[1024]; // Kernel buffer to hold formatted data
-  size_t state_len = sizeof(kernel_buffer);
+  size_t format_len;
 
   if (*offset != 0) {
     return 0; // EOF
   }   
 
-  if (len < state_len + 1) {
+  if (len < sizeof(kernel_buffer)) {
     return -EINVAL; // User buffer is too small
   }
 
   // Format the device data into the kernel buffer
-  len = snprintf(kernel_buffer, sizeof(kernel_buffer),
-                 "Device Information:\n"
-                 "Label       : %s\n"
-                 "Serial      : %s\n"
-                 "Reg Base    : 0x%016llx\n"
-                 "Reg Size    : 0x%016llx\n"
-                 "Size        : %u bytes\n"
-                 "Permission  : %s\n\n"
-                 "State       : %s\n",
-                 data->label,
-                 data->serial,
-                 data->reg_base,
-                 data->reg_size,
-                 data->size,
-                 data->permission,
-                 mdevice->state);
-    
-  if (copy_to_user(buf, kernel_buffer, len + 1)) {
+  format_len = snprintf(kernel_buffer, sizeof(kernel_buffer),
+                        "Device Information:\n"
+                        "Label       : %s\n"
+                        "Serial      : %s\n"
+                        "Reg Base    : 0x%016llx\n"
+                        "Reg Size    : 0x%016llx\n"
+                        "Size        : %u bytes\n"
+                        "Permission  : %s\n\n"
+                        "State       : %s\n",
+                        data->label,
+                        data->serial,
+                        data->reg_base,
+                        data->reg_size,
+                        data->size,
+                        data->permission,
+                        mdevice->state);
+  
+  // If copying to user space fails, return error
+  if (copy_to_user(buf, kernel_buffer, format_len + 1)) {
     return -EFAULT;
   }
 
   pr_info("Device %s done read\n", mdevice->name);  
-  *offset += len + 1;
-  return len + 1;
+  *offset += format_len + 1;
+  return format_len + 1;
 }
 
 // Function to write to device file
